@@ -62,4 +62,3 @@ class GUI(QtWidgets.QMainWindow):
         self.graphWidget.plot(x, y, name=plotname, pen=pen, symbol='o', symbolSize=10, symbolBrush=(color))
  
     def update_plot_data(self):
-        d1 = 
