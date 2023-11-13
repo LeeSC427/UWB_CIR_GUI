@@ -5,6 +5,10 @@ from admm import ADMM
 from cal import CAL
 from gui import GUI
 from set_tag import SET_TAGS
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QTimer
+from multiprocessing import Pool
+import time
 
 import numpy as np
 
@@ -28,7 +32,14 @@ class RUN_TAG:
         self.tag_2 = SET_TAGS(self.dest_id_1, self.dest_id_2, self.dest_id_3, self.dest_id_4, self.remote_id_0, self.remote_id_2, self.remote_id_1)
         self.tag_3 = SET_TAGS(self.dest_id_1, self.dest_id_2, self.dest_id_3, self.dest_id_4, self.remote_id_0, self.remote_id_1, self.remote_id_2)
 
+        #self.timer = QtCore.QTimer()
+        #self.timer.setInterval(100)
+        #self.timer.timeout.connect(Run.update_plot_data)
+        #self.timer.start()
+
         self.gui = GUI()
+
+        self.timer()
 
     def set_remote_id(self):
         self.remote_id_1 = 0x6846           # the network ID of the remote device
@@ -57,13 +68,30 @@ class RUN_TAG:
 
         return [est_1, est_2, est_3]
     
-    def update_plot_data(self, ObjSET_TAGS):
-        return np.array([ObjSET_TAGS.r_0.pozyx_loop(), ObjSET_TAGS.r_1.pozyx_loop(), ObjSET_TAGS.r_2.pozyx_loop(), ObjSET_TAGS.r_3.pozyx_loop(), ObjSET_TAGS.r_4.pozyx_loop(), ObjSET_TAGS.r_5.pozyx_loop(), ])
+    #def update_plot_data(self, TAG):
+    #    return np.array([ObjSET_TAGS.r_0.pozyx_loop(), ObjSET_TAGS.r_1.pozyx_loop(), ObjSET_TAGS.r_2.pozyx_loop(), ObjSET_TAGS.r_3.pozyx_loop(), ObjSET_TAGS.r_4.pozyx_loop(), ObjSET_TAGS.r_5.pozyx_loop(), ])
+    def update_plot_data1(self):
+        return np.array([self.tag_1.r_0.pozyx_loop(), self.tag_1.r_1.pozyx_loop(), self.tag_1.r_2.pozyx_loop(), self.tag_1.r_3.pozyx_loop(), self.tag_1.r_4.pozyx_loop(), self.tag_1.r_5.pozyx_loop()])
+    def update_plot_data2(self):
+        return np.array([self.tag_2.r_0.pozyx_loop(), self.tag_2.r_1.pozyx_loop(), self.tag_2.r_2.pozyx_loop(), self.tag_2.r_3.pozyx_loop(), self.tag_2.r_4.pozyx_loop(), self.tag_2.r_5.pozyx_loop()])
+    def update_plot_data3(self):
+        return np.array([self.tag_3.r_0.pozyx_loop(), self.tag_3.r_1.pozyx_loop(), self.tag_3.r_2.pozyx_loop(), self.tag_3.r_3.pozyx_loop(), self.tag_3.r_4.pozyx_loop(), self.tag_3.r_5.pozyx_loop()])
     
     def update_plot(self):
-        self.tag_1.data = self.update_plot_data(self.tag_1)
-        self.tag_2.data = self.update_plot_data(self.tag_2)
-        self.tag_3.data = self.update_plot_data(self.tag_3)
+        self.gui.plot_btn()
+        print("============================")
+        print(self.gui.btn_pushed)
+        print("============================")
+
+        with Pool(processes=1) as pool:
+            start=time.time()
+            args1 = self.update_plot_data1()
+            args2 = self.update_plot_data2()
+
+            result = pool.starmap(self.run, [args1, args2])
+        #self.tag_1.data = self.update_plot_data1()
+        #self.tag_2.data = self.update_plot_data2()
+        #self.tag_3.data = self.update_plot_data3()
 
         [self.est_1, self.est_2, self.est_3] = self.run(self.est_1, self.est_2, self.est_3)
         
@@ -94,3 +122,10 @@ class RUN_TAG:
         self.gui.data_line.setData(self.gui.x_0, self.gui.y_0)
         self.gui.data_line1.setData(self.gui.x_1, self.gui.y_1)
         self.gui.data_line2.setData(self.gui.x_2, self.gui.y_2)
+
+    def timer(self):
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.update_plot)
+        self.timer.start()
+
